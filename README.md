@@ -4,14 +4,6 @@ A small data pipeline that turns 7.2 million raw GPS fixes from 60 white storks 
 movement sequences, analyses them with SQL window functions, maps the migration, and lets
 anyone ask questions in plain English (an LLM writes the SQL, safely).
 
-![Map of the top 5 storks' migration routes](images/map.png)
-
-## Why this project: order matters
-
-Most tables don't care about row order. GPS tracks do: a single fix is just a dot, but
-each fix next to the one before it gives you a **step**, with a distance, a speed and a
-direction. Shuffle the rows and the migration route is gone. This is **sequential data**,
-and every feature in this project comes from comparing a point with its previous point.
 
 ## Data
 
@@ -38,7 +30,7 @@ stay longer.)
 ## Pipeline
 
 ```
-storks.csv (1.8 GB)
+storks.csv 
   -> EXTRACT   pandas, only the 6 needed columns
   -> CLEAN     outliers, missing values, real datetimes
   -> ORDER     sort by stork, then time; one fix per 5 min
@@ -115,12 +107,6 @@ days share the same `julianday(day) - ROW_NUMBER()` value).
 - **Data gaps matter:** 28 of 60 tracks end early, 5 within the first 11 days. One tag was
   silent for 5 days and then reported a single 1,097 km step.
 
-![Latitude over time](images/latitude_over_time.png)
-
-The staircase shape is the daily rhythm: storks soar on midday thermals (each step down)
-and rest at night (each flat part).
-
-![Distance per stork](images/distance_per_animal.png)
 
 ## Ask the data (LLM text-to-SQL)
 
@@ -157,9 +143,6 @@ Layer 2: read-only connection (even if a write got past layer 1)
   BLOCKED  direct DELETE              -> attempt to write a readonly database
 ```
 
-A free alternative is a local model via Ollama (no key, no cost per question), at the
-price of a few GB of disk space and weaker SQL from a small model.
-
 ## How to run
 
 ```bash
@@ -177,12 +160,3 @@ python ask_data.py "Which stork flew the farthest?"
 python ask_data.py --test
 ```
 
-## Skills demonstrated
-
-Python, pandas, SQL, window functions (LAG, running SUM, RANK, ROW_NUMBER), gaps-and-islands,
-ETL, data cleaning, time-series regularisation, geospatial distance (haversine), data
-visualization (matplotlib, folium), LLM text-to-SQL, prompt design (schema + few-shot),
-safe execution of LLM-generated code.
-
-**Possible extensions:** classify behaviour (flying / resting / foraging) with KMeans, and
-a Streamlit web app with the map, charts and the "ask the data" box.
